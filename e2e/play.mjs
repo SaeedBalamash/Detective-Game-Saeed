@@ -173,6 +173,28 @@ try {
   await shot('18-epilogue');
   await click('new-after');
   check('العودة إلى البداية بلا حفظ قديم', (await page.locator(t('resume')).count()) === 0);
+
+  // —— سيناريو ثانٍ: سهل + مؤقّت + ثلاث فرق
+  await click('new-game'); await click('diff-easy'); await page.check(t('timed')); await click('add-team'); await click('start');
+  for (let i = 0; i < 4; i++) await click('intro-next');
+  check('السهل: أربع حركات لكل دور', (await page.locator('.pips i').count()) === 4);
+  const t1 = await page.locator('.timer').innerText(); await page.waitForTimeout(2200);
+  check('المؤقّت يعدّ تنازلياً', t1 !== (await page.locator('.timer').innerText()), t1);
+  await hot('office');
+  check('السهل: قاعدة الصندوق ظاهرة من البداية', (await page.locator(t('hot-h_base')).count()) === 1);
+  await tab('time');
+  check('السهل: الأوقات ظاهرة في الخط الزمني', (await page.locator('.tl li b').count()) > 0);
+  await click('go-accuse'); await click('confirm-accuse');
+  check('ثلاث فرق: الاتهام يبدأ بالفريق الأول', (await page.locator('.cine-text').innerText()).includes('فريق الروشن'));
+
+  // —— سيناريو ثالث: خبير
+  await page.evaluate(() => localStorage.clear()); await page.reload();
+  await click('new-game'); await click('diff-expert'); await click('start');
+  for (let i = 0; i < 4; i++) await click('intro-next');
+  await person('khadija'); await click('q-k2');
+  check('الخبير: شهادة خديجة أقل صراحة', !(await page.locator('.bubble .a').innerText()).includes('باب ما يعرفه'));
+  await tab('logic'); await click('test-h');
+  check('الخبير: قاعة المنطق تعمل بلا حقائق', await page.locator(t('h-result')).isVisible());
   check('لا أخطاء في الكونسول', errors.length === 0, errors.slice(0, 3).join(' | '));
   await browser.close();
 } catch (e) {
