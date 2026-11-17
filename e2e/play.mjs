@@ -126,6 +126,17 @@ try {
   const first = await page.locator('.tl li').first().getAttribute('data-testid');
   await click(`down-${first.replace('tl-', '')}`); await click('check-tl');
   check('التحقق من الخط الزمني يتغير بتغيير الترتيب', r1 !== (await page.locator(t('tl-result')).innerText()), r1);
+  {
+    const items = await page.locator('.tl li').evaluateAll((els) => els.map((e) => e.dataset.testid));
+    const g = page.locator(`[data-testid="grip-${items[0].replace('tl-', '')}"]`);
+    const last = page.locator('.tl li').nth(2);
+    await page.locator('.tl').scrollIntoViewIfNeeded(); await page.locator('.stage').evaluate((el) => { el.scrollTop = 0; });
+    const a = await g.boundingBox(), b = await last.boundingBox();
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2); await page.mouse.down();
+    await page.mouse.move(a.x + a.width / 2, b.y + b.height / 2, { steps: 8 }); await page.mouse.up();
+    const after = await page.locator('.tl li').evaluateAll((els) => els.map((e) => e.dataset.testid));
+    check('سحب حدث في الخط الزمني يغيّر ترتيبه', after[2] === items[0], items.slice(0, 3).join(',') + ' → ' + after.slice(0, 3).join(','));
+  }
   await shot('11-timeline');
   await tab('notes'); await page.fill(t('notes'), 'الدقيق على المسمار… من كان في المطبخ؟');
   await click('mark-khadija:o');

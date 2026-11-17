@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { Look } from '../engine/types';
 
 /* ============ الصندوق ============ */
@@ -254,14 +255,27 @@ const SCENES: Record<string, () => JSX.Element> = {
   majlis: Majlis, office: Office, kitchen: Kitchen, hosh: Hosh, maqad: Maqad, makhzan: Makhzan, souq: Souq, company: Company,
 };
 
-export function Scene({ id, children }: { id: string; children?: React.ReactNode }) {
+export function Scene({ id, children, live }: { id: string; children?: React.ReactNode; live?: boolean }) {
   const S = SCENES[id] ?? Majlis;
+  const ref = useRef<HTMLDivElement>(null);
+  const move = (e: React.PointerEvent) => {
+    if (!live || e.pointerType !== 'mouse' || !ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    ref.current.style.setProperty('--px', String((e.clientX - r.left) / r.width - 0.5));
+    ref.current.style.setProperty('--py', String((e.clientY - r.top) / r.height - 0.5));
+  };
   return (
-    <div className="scene" data-scene={id}>
-      <svg viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
+    <div className={`scene ${live ? 'live' : ''}`} data-scene={id} ref={ref} onPointerMove={move}>
+      <svg className="layer" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
         <Defs />
         <S />
         <rect width="1600" height="900" fill="#0b1530" opacity=".12" />
+      </svg>
+      <div className="fx-light" aria-hidden="true" />
+      <div className="fx-vignette" aria-hidden="true" />
+      <svg className="fx-grain" aria-hidden="true">
+        <filter id={`grain-${id}`}><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch" /></filter>
+        <rect width="100%" height="100%" filter={`url(#grain-${id})`} />
       </svg>
       {children}
     </div>

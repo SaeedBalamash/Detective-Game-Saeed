@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { Character, Evidence, Hypothesis } from '../engine/types';
 import { useGame } from './App';
 import { Avatar, Scene, YusufPhoto } from './art';
@@ -133,7 +133,7 @@ function Places({ onEv }: { onEv: (id: string) => void }) {
         <h2>{loc.name}</h2>
       </div>
       <div className="place-grid">
-      <Scene id={loc.scene}>
+      <Scene id={loc.scene} key={loc.id} live>
         {spots.map((h) => (
           <button key={h.id} data-testid={`hot-${h.id}`}
             className={`hotspot ${s.seenHot.includes(h.id) ? 'seen' : ''} ${h.eagle ? 'eagle' : ''} d-${s.difficulty}`}
@@ -477,12 +477,25 @@ function Timeline() {
   const { s, d, cs } = useGame();
   const [era, setEra] = useState<'tonight' | 'past'>('tonight');
   const [res, setRes] = useState<ReturnType<typeof timelineScore> | null>(null);
+  const [drag, setDrag] = useState<string | null>(null);
+  const listRef = useRef<HTMLOListElement>(null);
   const ids = s.order[era];
   const total = cs.timeline.filter((e) => e.era === era).length;
+  const put = (next: string[]) => { d({ t: 'order', era, ids: next }); setRes(null); };
   const move = (i: number, by: number) => {
     const j = i + by; if (j < 0 || j >= ids.length) return;
     const next = [...ids]; [next[i], next[j]] = [next[j], next[i]];
-    d({ t: 'order', era, ids: next }); setRes(null);
+    put(next);
+  };
+  /* سحب بالمؤشر أو باللمس: يُعاد الترتيب أثناء الحركة */
+  const onMove = (e: React.PointerEvent) => {
+    if (!drag || !listRef.current) return;
+    const items = Array.from(listRef.current.children) as HTMLElement[];
+    const target = items.findIndex((el) => { const r = el.getBoundingClientRect(); return e.clientY >= r.top && e.clientY <= r.bottom; });
+    const from = ids.indexOf(drag);
+    if (target < 0 || target === from) return;
+    const next = [...ids]; next.splice(from, 1); next.splice(target, 0, drag);
+    put(next);
   };
   return (
     <div className="time">
@@ -491,13 +504,15 @@ function Timeline() {
         <button className={`btn small ${era === 'past' ? 'primary' : ''}`} data-testid="era-past" onClick={() => { setEra('past'); setRes(null); }}>تاريخ العائلة</button>
         <span className="muted">مكتشف: {ar(ids.length)} من {ar(total)} أحداث</span>
       </div>
-      <p className="muted">رتّبوا الأحداث من الأقدم إلى الأحدث. {s.difficulty === 'easy' ? '' : 'الأوقات مذكورة داخل الأدلة.'}</p>
-      <ol className="tl">
+      <p className="muted">اسحبوا الأحداث من المقبض ⠿ (أو استعملوا الأسهم) لترتيبها من الأقدم إلى الأحدث. {s.difficulty === 'easy' ? '' : 'الأوقات مذكورة داخل الأدلة.'}</p>
+      <ol className="tl" ref={listRef} onPointerMove={onMove} onPointerUp={() => setDrag(null)} onPointerCancel={() => setDrag(null)}>
         {ids.map((id, i) => {
           const e = cs.timeline.find((x) => x.id === id)!;
           const ok = res && res.sorted[i] === id;
           return (
-            <li key={id} className={res && s.difficulty === 'easy' ? (ok ? 'good' : 'bad') : ''} data-testid={`tl-${id}`}>
+            <li key={id} className={`${res && s.difficulty === 'easy' ? (ok ? 'good' : 'bad') : ''} ${drag === id ? 'dragging' : ''}`} data-testid={`tl-${id}`}>
+              <span className="grip" aria-hidden="true" data-testid={`grip-${id}`}
+                onPointerDown={(ev) => { ev.preventDefault(); (ev.currentTarget.parentElement?.parentElement as HTMLElement)?.setPointerCapture(ev.pointerId); setDrag(id); }}>⠿</span>
               <span className="n">{ar(i + 1)}</span>
               <span className="t">{s.difficulty === 'easy' && <b>{e.time} · </b>}{e.text}</span>
               <button aria-label="أعلى" data-testid={`up-${id}`} onClick={() => move(i, -1)}>▲</button>
