@@ -8,7 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "test": "vitest run",
-    "e2e": "node e2e/play.mjs"
+    "e2e": "node e2e/play.mjs",
+    "build:artifact": "vite build -c vite.artifact.config.ts && node scripts-make-artifact.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",

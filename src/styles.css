@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --bg: #0d1628; --bg2: #15233f; --panel: #1b2b4b; --line: #2d426b;
   --ink: #f3ecdb; --muted: #a9b4c8; --gold: #d9a441; --gold2: #f1c659;
   --teal: #3aa6a0; --red: #c8553d; --ok: #7bd389;
@@ -52,7 +53,7 @@ textarea { resize: vertical; }
 .shaft { animation: shaft 7s ease-in-out infinite; } @keyframes shaft { 50% { opacity: .34; } }
 
 /* البداية والمشاهد السينمائية */
-.title-screen, .cine { position: relative; flex: 1; min-height: 100vh; display: grid; place-items: center; overflow: hidden; }
+.title-screen, .cine { position: relative; flex: 1; min-height: 100%; display: grid; place-items: center; overflow: hidden; }
 .title-screen > .scene, .cine > .scene { animation: kenburns 30s ease-in-out infinite alternate, scene-in 1.2s both; position: absolute; inset: 0; height: 100%; aspect-ratio: auto; border-radius: 0; filter: brightness(.55) saturate(.9); }
 .cine::before, .cine::after { content: ''; position: absolute; inset-inline: 0; height: 7vh; background: #000; z-index: 1; animation: bars 1.2s cubic-bezier(.2,.7,.2,1) both; }
 .cine::before { top: 0; } .cine::after { bottom: 0; }
@@ -74,7 +75,8 @@ details summary { cursor: pointer; color: var(--muted); }
 .team-row { display: grid; grid-template-columns: 1fr 2fr; gap: .6em; margin-bottom: .6em; }
 
 /* اللعب */
-.play { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.play { display: flex; flex-direction: column; height: 100%; }
+.app { height: 100%; }
 .top { display: flex; align-items: center; gap: .8em; padding: .5em 1em; background: var(--bg2); border-bottom: 1px solid var(--line); }
 .brand { font-family: var(--display); color: var(--gold2); font-size: 1.2em; }
 .turn { display: flex; align-items: center; gap: .5em; border: 2px solid; border-radius: 99px; padding: .15em .9em; }

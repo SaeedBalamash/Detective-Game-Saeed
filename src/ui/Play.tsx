@@ -26,6 +26,9 @@ export function Play() {
   const [tab, setTab] = useState<Tab>('places');
   const [open, setOpen] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
+  const [quit, setQuit] = useState(false);
+  const [code, setCode] = useState('');
+  const [copied, setCopied] = useState(false);
   const team = s.teams[s.turn];
   const rot = s.log.length;
   const mm = Math.floor(s.timeLeft / 60), ss = s.timeLeft % 60;
@@ -83,12 +86,32 @@ export function Play() {
             <h3>القائمة</h3>
             <p className="muted">التقدم يُحفظ تلقائياً على هذا الجهاز.</p>
             <button className="btn" onClick={() => { d({ t: 'endTurn' }); setMenu(false); }}>إنهاء دور {team.name} الآن</button>
-            <button className="btn" onClick={() => { void navigator.clipboard?.writeText(exportCode(s)); alert('نُسخ رمز الحفظ.'); }}>نسخ رمز الحفظ</button>
+            <button className="btn" data-testid="copy-code" onClick={() => {
+              const code = exportCode(s);
+              setCode(code);
+              navigator.clipboard?.writeText(code).then(() => setCopied(true), () => setCopied(false));
+            }}>نسخ رمز الحفظ</button>
+            {code && (
+              <div className="col">
+                <p className={copied ? 'ok' : 'muted'}>{copied ? 'نُسخ الرمز. احفظوه لاستئناف اللعب على جهاز آخر.' : 'انسخوا الرمز يدوياً من المربع:'}</p>
+                <textarea readOnly rows={3} value={code} onFocus={(e) => e.currentTarget.select()} aria-label="رمز الحفظ" />
+              </div>
+            )}
             <button className="btn primary" data-testid="confirm-accuse" onClick={() => d({ t: 'phase', phase: 'accuse' })}>
               انتهينا من التحقيق — إلى الاتهام النهائي
             </button>
-            <button className="btn danger" onClick={() => { if (confirm('إنهاء اللعبة والعودة للبداية؟')) d({ t: 'reset' }); }}>خروج إلى البداية</button>
-            <button className="btn" onClick={() => setMenu(false)}>إغلاق</button>
+            {!quit
+              ? <button className="btn danger" data-testid="quit" onClick={() => setQuit(true)}>خروج إلى البداية</button>
+              : (
+                <div className="col">
+                  <p className="warn">إنهاء اللعبة والعودة للبداية؟ يبقى آخر حفظ متاحاً للاستئناف.</p>
+                  <div className="row">
+                    <button className="btn danger" data-testid="quit-yes" onClick={() => d({ t: 'reset' })}>نعم، اخرجوا</button>
+                    <button className="btn" onClick={() => setQuit(false)}>لا، نكمل</button>
+                  </div>
+                </div>
+              )}
+            <button className="btn" onClick={() => { setMenu(false); setQuit(false); setCode(''); }}>إغلاق</button>
           </div>
         </div>
       )}
